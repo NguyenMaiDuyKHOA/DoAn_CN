@@ -27,6 +27,8 @@ import cross_icon from './cross_icon.png'
 import momo_icon_square_pinkbg from './momo_icon_square_pinkbg.png'
 import mastercard_logo from './mastercard_logo.png'
 import Napas_Logo from './Napas_Logo.png'
+import table_size from './table_size.jpg'
+import down_icon from './down.png'
 
 export const assets = {
     logo,
@@ -57,5 +59,7 @@ export const assets = {
     cross_icon,
     momo_icon_square_pinkbg,
     mastercard_logo,
-    Napas_Logo
+    Napas_Logo,
+    table_size,
+    down_icon
 }

@@ -8,6 +8,10 @@ import order_icon from './order_icon.png'
 import upload_area from './upload_area.png'
 import parcel_icon from './parcel_icon.svg'
 import bin_icon from './bin_icon.png'
+import search_icon from './search_icon.png'
+import pen from './pen.png'
+import banner_icon from './banner__icon.png'
+import diagram_icon from './diagram_icon.png'
 
 export const assets = {
     logo,
@@ -19,6 +23,10 @@ export const assets = {
     order_icon,
     upload_area,
     parcel_icon,
-    bin_icon
+    bin_icon,
+    search_icon,
+    pen,
+    banner_icon,
+    diagram_icon
 }
 

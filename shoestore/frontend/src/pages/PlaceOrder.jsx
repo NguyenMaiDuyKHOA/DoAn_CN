@@ -55,6 +55,7 @@ const PlaceOrder = () => {
                 // API Calls for COD
                 case 'cod':
                     const response = await axios.post(backendUrl + '/api/order/place', orderData, { headers: { token } })
+
                     if (response.data.success) {
                         setCartItems({})
                         navigate('/orders')
@@ -62,7 +63,13 @@ const PlaceOrder = () => {
                         toast.error(response.data.message)
                     }
                     break;
-
+                // case 'momo'
+                case 'momo':
+                    const payment = await axios.post(backendUrl + '/api/order/momopay', orderData, { headers: { token } })
+                    if (payment.data.success) {
+                        window.location.href = payment.data.result.payUrl;
+                    }
+                    break;
                 default:
                     break;
             }

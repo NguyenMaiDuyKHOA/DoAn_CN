@@ -28,6 +28,19 @@ const Orders = ({ token }) => {
         }
     }
 
+    const paymentHandler = async (event, orderId) => {
+        try {
+            const response = await axios.post(backendUrl + '/api/order/payment', { orderId, payment: event.target.value }, { headers: { token } })
+
+            if (response.data.success) {
+                await fetchAllOrders()
+            }
+        } catch (error) {
+            console.log(error)
+            toast.error(response.data.message)
+        }
+    }
+
     const statusHandler = async (event, orderId) => {
         try {
             const response = await axios.post(backendUrl + '/api/order/status', { orderId, status: event.target.value }, { headers: { token } })
@@ -70,7 +83,7 @@ const Orders = ({ token }) => {
                                     })}
                                 </div>
                                 <p className='mt-3 mb-2 font-medium'>Customer: {order.address.firstName + "" + order.address.lastName}</p>
-                                <p>Address {order.address.address + ", " + order.address.district + ", " + order.address.city}</p>
+                                <p>Address: {order.address.address + ", " + order.address.district + ", " + order.address.city}</p>
                                 <p>Phone: {order.address.phone}, Email: {order.address.email}</p>
                             </div>
                             <div>
@@ -80,6 +93,10 @@ const Orders = ({ token }) => {
                                 <p>Date : {moment(order.date).format("DD/MM/YYYY")}</p>
                             </div>
                             <p className='text-sm sm:text-[15px]'>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.amount)}</p>
+                            <select onChange={(event) => paymentHandler(event, order._id)} value={order.payment} className='p-2 font-semibold'>
+                                <option value="true">Pending</option>
+                                <option value="false">Wait for Delivery</option>
+                            </select>
                             <select onChange={(event) => statusHandler(event, order._id)} value={order.status} className='p-2 font-semibold'>
                                 <option value="Order Placed">Order Placed</option>
                                 <option value="Packing">Packing</option>

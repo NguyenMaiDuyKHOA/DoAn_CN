@@ -2,7 +2,6 @@ import React, { useContext, useState } from 'react'
 import { assets } from '../assets/assets'
 import { Link, NavLink } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
-import Orders from '../pages/Orders';
 
 const Navbar = () => {
 
@@ -47,7 +46,7 @@ const Navbar = () => {
 
             {/* Search */}
             <div className='flex items-center gap-6'>
-                <img onClick={() => setShowSearch(true)} src={assets.search_icon} className='w-5 cursor-pointer' alt="" />
+                <Link to='/collection'><img onClick={() => setShowSearch(true)} src={assets.search_icon} className='w-5 cursor-pointer' alt="" /></Link>
 
                 {/* Profile */}
                 <div className='group relative'>

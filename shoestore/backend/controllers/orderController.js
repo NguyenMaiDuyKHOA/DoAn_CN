@@ -1,6 +1,8 @@
-import { response } from 'express';
 import orderModel from '../models/orderModel.js'
 import userModel from '../models/userModel.js'
+import crypto from 'crypto'
+import axios from 'axios'
+import { response } from 'express'
 
 //Placing orders using COD Method
 const placeOrder = async (req, res) => {
@@ -30,84 +32,123 @@ const placeOrder = async (req, res) => {
 
 //Placing orders using Momo Method
 const placeOrderMomo = async (req, res) => {
-    var orderInfo = 'pay with MoMo';
-    var partnerCode = 'MOMO';
-    var redirectUrl = 'https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b';
-    var ipnUrl = 'https://webhook.site/b3088a6a-2d17-4f8d-a383-71389a6c600b';
-    var requestType = "payWithMethod";
-    var amount = '50000';
-    var orderId = partnerCode + new Date().getTime();
-    var requestId = orderId;
-    var extraData = '';
-    var orderGroupId = '';
-    var autoCapture = true;
-    var lang = 'vi';
+    try {
+        const { orderId, resultCode, message } = req.body;
 
-    //before sign HMAC SHA256 with format
-    //accessKey=$accessKey&amount=$amount&extraData=$extraData&ipnUrl=$ipnUrl&orderId=$orderId&orderInfo=$orderInfo&partnerCode=$partnerCode&redirectUrl=$redirectUrl&requestId=$requestId&requestType=$requestType
-    var rawSignature = "accessKey=" + accessKey + "&amount=" + amount + "&extraData=" + extraData + "&ipnUrl=" + ipnUrl + "&orderId=" + orderId + "&orderInfo=" + orderInfo + "&partnerCode=" + partnerCode + "&redirectUrl=" + redirectUrl + "&requestId=" + requestId + "&requestType=" + requestType;
-    //puts raw signature
-    console.log("--------------------RAW SIGNATURE----------------")
-    console.log(rawSignature)
-    //signature
-    const crypto = require('crypto');
-    var signature = crypto.createHmac('sha256', secretKey)
-        .update(rawSignature)
-        .digest('hex');
-    console.log("--------------------SIGNATURE----------------")
-    console.log(signature)
+        // Kiểm tra xem thanh toán có thành công không (resultCode = 0)
+        if (resultCode === '0') { // Thanh toán thành công
+            // Cập nhật trạng thái payment thành true trong cơ sở dữ liệu
+            await orderModel.updateOne({ orderId: orderId }, { payment: true });
 
-    //json object send to MoMo endpoint
-    const requestBody = JSON.stringify({
-        partnerCode: partnerCode,
-        partnerName: "Test",
-        storeId: "MomoTestStore",
-        requestId: requestId,
-        amount: amount,
-        orderId: orderId,
-        orderInfo: orderInfo,
-        redirectUrl: redirectUrl,
-        ipnUrl: ipnUrl,
-        lang: lang,
-        requestType: requestType,
-        autoCapture: autoCapture,
-        extraData: extraData,
-        orderGroupId: orderGroupId,
-        signature: signature
-    });
-    //Create the HTTPS objects
-    const https = require('https');
-    const options = {
-        hostname: 'test-payment.momo.vn',
-        port: 443,
-        path: '/v2/gateway/api/create',
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(requestBody)
+            // Trả về thông báo thành công
+            return res.json({ success: true, message: 'Payment successful' });
+        } else {
+            // Trường hợp thanh toán thất bại
+            console.log(`Payment failed for orderId: ${orderId}. Message: ${message}`);
+            return res.status(400).json({ success: false, message: 'Payment failed', data: req.body });
         }
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error',
+        });
     }
+};
 
+
+const momoPayment = async (req, res) => {
     try {
         const { userId, items, amount, address } = req.body;
 
+        var accessKey = 'F8BBA842ECF85';
+        var secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
+        var orderInfo = 'pay with MoMo';
+        var partnerCode = 'MOMO';
+        var redirectUrl = 'http://localhost:5173/verify';
+        var ipnUrl = 'https://2544-2402-800-634f-9a57-4d9-a215-638f-c453.ngrok-free.app/api/order/momo';
+        var requestType = "payWithMethod";
+        var extraData = '';
+        var autoCapture = true;
+        var lang = 'en';
+
+        // ** Tạo dữ liệu đơn hàng **
         const orderData = {
             userId,
             items,
             address,
             amount,
-            paymentMethod: "Momo",
+            paymentMethod: "MOMO",
             payment: false,
             date: Date.now()
+        };
 
-            // const newOrder = new orderModel(orderData)
-            // await newOrder.save()
+        // Lưu đơn hàng mới và lấy `_id` làm `orderId`
+        const newOrder = new orderModel(orderData);
+        await newOrder.save();
+        const orderId = newOrder._id.toString(); // Chuyển `_id` thành chuỗi để sử dụng
 
-            // await userModel.findByIdAndUpdate(userId, { cardData: {} })
-            // res.json({ success: true, message: "Order Placed" })
+        // ** Tạo chữ ký **
+        var rawSignature = "accessKey=" + accessKey + "&amount=" + amount + "&extraData=" + extraData + "&ipnUrl=" + ipnUrl + "&orderId=" + orderId + "&orderInfo=" + orderInfo + "&partnerCode=" + partnerCode + "&redirectUrl=" + redirectUrl + "&requestId=" + orderId + "&requestType=" + requestType;
+        var signature = crypto.createHmac('sha256', secretKey)
+            .update(rawSignature)
+            .digest('hex');
+
+        // ** Tạo requestBody để gửi đến MoMo **
+        const requestBody = JSON.stringify({
+            partnerCode: partnerCode,
+            partnerName: "Test",
+            storeId: "MomoTestStore",
+            requestId: orderId,
+            amount: amount,
+            orderId: orderId,
+            orderInfo: orderInfo,
+            redirectUrl: redirectUrl,
+            ipnUrl: ipnUrl,
+            lang: lang,
+            requestType: requestType,
+            autoCapture: autoCapture,
+            extraData: extraData,
+            signature: signature
+        });
+
+        const options = {
+            method: "POST",
+            url: "https://test-payment.momo.vn/v2/gateway/api/create",
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(requestBody)
+            },
+            data: requestBody
+        };
+
+        const result = await axios(options);
+        return res.json({ success: true, result: result.data });
+    } catch (error) {
+        console.log(error.response ? error.response.data : error.message);
+        return res.status(500).json({
+            statusCode: 500,
+            message: "Server error"
+        });
+    }
+};
+
+
+const verifyMomo = async (req, res) => {
+    const { orderId, resultCode, userId } = req.body
+
+    try {
+        if (Number(resultCode) === 0) {
+            await orderModel.findByIdAndUpdate(orderId, { payment: true })
+            await userModel.findByIdAndUpdate(userId, { cardData: {} })
+            res.json({ success: true })
+        } else {
+            await orderModel.findByIdAndDelete(orderId)
+            res.json({ success: false })
         }
     } catch (error) {
-
+        console.log(error)
+        res.json({ success: false, message: error.message })
     }
 }
 
@@ -157,4 +198,16 @@ const updateStatus = async (req, res) => {
     }
 }
 
-export { placeOrder, placeOrderMomo, placeOrderNapas, placeOrderMasterCard, allOrders, userOrders, updateStatus }
+//Update orders payment from Admin panel
+const updatePayment = async (req, res) => {
+    try {
+        const { orderId, payment } = req.body
+        await orderModel.findByIdAndUpdate(orderId, { payment })
+        res.json({ success: true, message: 'Payment Updated' })
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
+export { placeOrder, placeOrderMomo, placeOrderNapas, placeOrderMasterCard, allOrders, userOrders, updateStatus, momoPayment, updatePayment, verifyMomo }

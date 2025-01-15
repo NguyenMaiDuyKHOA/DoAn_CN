@@ -14,6 +14,7 @@ const Add = ({ token }) => {
 
     const [name, setName] = useState("")
     const [description, setDescription] = useState("")
+    const [descriptionDetail, setDescriptionDetail] = useState("")
     const [price, setPrice] = useState("")
     const [category, setCategory] = useState("Tennis")
     const [subCategory, setSubCategory] = useState("Nike")
@@ -28,6 +29,7 @@ const Add = ({ token }) => {
 
             formData.append("name", name)
             formData.append("description", description)
+            formData.append("descriptionDetail", descriptionDetail)
             formData.append("price", price)
             formData.append("category", category)
             formData.append("subCategory", subCategory)
@@ -45,6 +47,7 @@ const Add = ({ token }) => {
                 toast.success(response.data.message)
                 setName('')
                 setDescription('')
+                setDescriptionDetail('')
                 setPrice('')
                 setImage1(false)
                 setImage2(false)
@@ -89,7 +92,11 @@ const Add = ({ token }) => {
             </div>
             <div className='w-full'>
                 <p className=''>Product description</p>
-                <textarea onChange={(e) => setDescription(e.target.value)} value={description} type="text" placeholder='Write content here' className='w-full max-w-[500px] px-3 py-2' required />
+                <textarea onChange={(e) => setDescription(e.target.value)} value={description} type="text" placeholder='Write description' className='w-full max-w-[800px] px-3 py-2 min-h-[150px]' required />
+            </div>
+            <div className='w-full'>
+                <p className=''>Product description detail</p>
+                <textarea onChange={(e) => setDescriptionDetail(e.target.value)} value={descriptionDetail} type="text" placeholder='Write description detail' className='w-full max-w-[800px] px-3 py-2 min-h-[300px]' required />
             </div>
             <div className='flex flex-col sm:flex-row gap-2 w-full sm:gap-8'>
                 <div className=''>
@@ -110,7 +117,15 @@ const Add = ({ token }) => {
                 </div>
                 <div className=''>
                     <p className='mb-2'>Product Price</p>
-                    <input onChange={(e) => setPrice(e.target.value)} value={price} type="Number" placeholder='00' className='w-full px-3 py-2 sm:w-[120px]' />
+                    <input onChange={(e) => {
+                        if (e.target.value >= 0 || e.target.value === '') {
+                            setPrice(e.target.value); // Cập nhật giá trị nếu không âm hoặc trống
+                        } else {
+                            setPrice(0); // Đặt về 0 nếu giá trị âm
+                        }
+                    }}
+                        value={price} type="Number" placeholder='00' className='w-full px-3 py-2 sm:w-[120px]'
+                    />
                 </div>
             </div>
 

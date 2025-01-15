@@ -47,7 +47,8 @@ const Orders = () => {
                 {
                     orderData.map((item, index) => (
                         <div key={index} className='py-4 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
-                            <div className='flex items-start gap-6 text-sm'>
+                            {/* Cột bên trái - Chi tiết sản phẩm */}
+                            <div className='flex items-start gap-6 text-sm md:w-1/2'>
                                 <img src={item.image[0]} alt="" className='w-16 sm:w-20' />
                                 <div>
                                     <p className='sm:text-base font-medium'>{item.name}</p>
@@ -60,12 +61,33 @@ const Orders = () => {
                                     <p className='mt-1'>Payment: <span className='text-gray-400'>{item.paymentMethod}</span></p>
                                 </div>
                             </div>
-                            <div className='md:w-1/2 flex justify-between'>
-                                <div className='flex items-center gap-2'>
+
+                            {/* Cột bên phải - Trạng thái và nút Track */}
+                            <div className='md:w-1/2 flex justify-between items-center gap-4'>
+                                {/* Cột trạng thái đơn hàng */}
+                                <div className='flex items-center gap-2' style={{ flexBasis: '150px' }}>
                                     <p className='min-w-2 h-2 rounded-full bg-green-500'></p>
                                     <p className='text-sm md:text-base'>{item.status}</p>
                                 </div>
-                                <button onClick={loadOrderData} className='border px-4 py-2 test-sm font-medium rounded-sm'>Track Order</button>
+
+                                {/* Cột trạng thái thanh toán */}
+                                <div className='flex items-center gap-2' style={{ flexBasis: '150px' }}>
+                                    {item.payment === true
+                                        ? <div className='flex items-center gap-2'>
+                                            <p className='min-w-2 h-2 rounded-full bg-green-500'></p>
+                                            <p className='text-sm md:text-base'>Paid</p>
+                                        </div>
+                                        : <div className='flex items-center gap-2'>
+                                            <p className='min-w-2 h-2 rounded-full bg-yellow-500'></p>
+                                            <p className='text-sm md:text-base'>Not Paid</p>
+                                        </div>
+                                    }
+                                </div>
+
+                                {/* Cột Track Order */}
+                                <div style={{ flexBasis: '150px', textAlign: 'right' }}>
+                                    <button onClick={loadOrderData} className='border px-4 py-2 text-sm font-medium rounded-sm'>Track Order</button>
+                                </div>
                             </div>
                         </div>
                     ))
